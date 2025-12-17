@@ -1,8 +1,6 @@
 {
   "extends": "../../packages/config/tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist",
     "composite": true,
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
