@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "biomejs.biome",
+    "bradlc.vscode-tailwindcss",
+    "supabase.vscode-supabase",
+    "dsznajder.es7-react-js-snippets",
+    "GitHub.copilot"
+  ]
+}
