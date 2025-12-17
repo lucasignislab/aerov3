@@ -22,9 +22,11 @@ import { toast } from '@/components/ui/use-toast'
 
 interface CreateProjectModalProps {
   workspaceId: string
+  userId: string
+  workspaceSlug?: string
 }
 
-export function CreateProjectModal({ workspaceId }: CreateProjectModalProps) {
+export function CreateProjectModal({ workspaceId, userId, workspaceSlug }: CreateProjectModalProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -41,12 +43,8 @@ export function CreateProjectModal({ workspaceId }: CreateProjectModalProps) {
     setLoading(true)
 
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
-
       // Create project
-      const { data: project, error } = await supabase
+      const { data: project, error: projectError } = await supabase
         .from('projects')
         .insert({
           workspace_id: workspaceId,
@@ -54,19 +52,19 @@ export function CreateProjectModal({ workspaceId }: CreateProjectModalProps) {
           description: formData.description,
           identifier: formData.identifier.toUpperCase(),
           icon: formData.icon,
-          created_by: user.id,
+          created_by: userId,
         })
         .select()
         .single()
 
-      if (error) throw error
+      if (projectError) throw projectError
 
       // Create default issue states for this project
       const states = [
-        { name: 'Backlog', group: 'backlog', position: 0, color: '#94a3b8' },
-        { name: 'Todo', group: 'unstarted', position: 1, color: '#3b82f6' },
-        { name: 'In Progress', group: 'started', position: 2, color: '#f59e0b' },
-        { name: 'Done', group: 'completed', position: 3, color: '#10b981' },
+        { name: 'Backlog', color: '#94a3b8', position: 0, state_group: 'backlog' },
+        { name: 'Todo', color: '#3b82f6', position: 1, state_group: 'unstarted' },
+        { name: 'In Progress', color: '#f59e0b', position: 2, state_group: 'started' },
+        { name: 'Done', color: '#10b981', position: 3, state_group: 'completed' },
       ]
 
       for (const state of states) {
@@ -74,7 +72,7 @@ export function CreateProjectModal({ workspaceId }: CreateProjectModalProps) {
           name: state.name,
           color: state.color,
           position: state.position,
-          group: state.group,
+          state_group: state.state_group,
           project_id: project.id,
         })
       }
@@ -87,8 +85,12 @@ export function CreateProjectModal({ workspaceId }: CreateProjectModalProps) {
       setOpen(false)
       setFormData({ name: '', description: '', identifier: '', icon: '📋' })
       
-      // Refresh the page
-      router.refresh()
+      // Redirect to project or refresh
+      if (workspaceSlug) {
+        router.push(`/workspace/${workspaceSlug}/project/${project.id}`)
+      } else {
+        router.refresh()
+      }
       
     } catch (error: any) {
       console.error('Error creating project:', error)

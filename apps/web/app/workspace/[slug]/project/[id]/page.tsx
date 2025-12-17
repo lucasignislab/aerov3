@@ -9,14 +9,14 @@ import { ArrowLeft, Settings, List, Calendar, GitBranch, BarChart } from 'lucide
 import Link from 'next/link'
 
 interface ProjectPageProps {
-  params: {
+  params: Promise<{
     slug: string
     id: string
-  }
+  }>
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
-  const { slug, id } = params
+  const { slug, id } = await params
   const supabase = await createClient()
   
   // Get current user

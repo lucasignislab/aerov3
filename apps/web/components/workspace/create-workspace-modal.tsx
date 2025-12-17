@@ -37,11 +37,26 @@ export function CreateWorkspaceModal({ trigger }: CreateWorkspaceModalProps) {
   const supabase = createClient()
 
   const generateSlug = (name: string) => {
-    return name
+    // Remove acentos
+    const withoutAccents = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    
+    const slug = withoutAccents
       .toLowerCase()
-      .replace(/[^\w\s]/gi, '')
-      .replace(/\s+/g, '-')
-      .substring(0, 50)
+      .trim()
+      .replace(/[^\w\s-]/g, '') // Remove caracteres especiais exceto hífens
+      .replace(/\s+/g, '-')     // Substitui espaços por hífens
+      .replace(/-+/g, '-')      // Remove múltiplos hífens consecutivos
+      .replace(/^-+/, '')       // Remove hífens do início
+      .replace(/-+$/, '')       // Remove hífens do final
+      .substring(0, 50)         // Limita o tamanho
+      
+    console.log('🔤 Slug gerado:', { 
+      original: name, 
+      withoutAccents, 
+      final: slug 
+    })
+    
+    return slug || 'workspace' // Fallback se slug for vazio
   }
 
   const handleNameChange = (name: string) => {
@@ -120,8 +135,15 @@ export function CreateWorkspaceModal({ trigger }: CreateWorkspaceModalProps) {
       setOpen(false)
       setFormData({ name: '', description: '', slug: '' })
       
-      // Refresh the page to show new workspace
-      router.refresh()
+      console.log('🎯 Workspace criado com sucesso!', {
+        workspace,
+        slug: formData.slug,
+        redirectUrl: `/workspace/${formData.slug}`
+      })
+
+      // Redirect to the workspace
+      router.push(`/workspace/${formData.slug}`)
+      router.refresh() // Force refresh to load data
       
     } catch (error: any) {
       console.error('❌ Error creating workspace:', error)
