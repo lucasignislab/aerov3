@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { ensureUserExists } from '@/lib/supabase/helpers'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -56,12 +57,29 @@ export function CreateWorkspaceModal({ trigger }: CreateWorkspaceModalProps) {
     setLoading(true)
 
     try {
-      // 1. Get current user
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+      // 1. Ensure user exists in database
+      const user = await ensureUserExists()
+      
+      console.log('📋 1. User data:', { user })
+      
+      if (!user) {
+        toast({
+          title: 'Error',
+          description: 'User not found. Please try logging in again.',
+          variant: 'destructive',
+        })
+        setLoading(false)
+        return
+      }
 
       // 2. Create workspace
-      const { data: workspace, error } = await supabase
+      console.log('📋 2. Creating workspace with data:', {
+        name: formData.name,
+        slug: formData.slug,
+        owner_id: user.id
+      })
+
+      const { data: workspace, error: workspaceError } = await supabase
         .from('workspaces')
         .insert({
           name: formData.name,
@@ -71,16 +89,28 @@ export function CreateWorkspaceModal({ trigger }: CreateWorkspaceModalProps) {
         .select()
         .single()
 
-      if (error) throw error
+      console.log('📋 3. Workspace response:', { workspace, workspaceError })
+
+      if (workspaceError) throw workspaceError
 
       // 3. Add user as workspace member
-      await supabase
+      console.log('📋 4. Adding user as workspace member:', {
+        workspace_id: workspace.id,
+        member_id: user.id,
+        role: 'owner'
+      })
+
+      const { error: memberError } = await supabase
         .from('workspace_members')
         .insert({
           workspace_id: workspace.id,
           member_id: user.id,
           role: 'owner',
         })
+
+      console.log('📋 5. Member response:', { memberError })
+
+      if (memberError) throw memberError
 
       toast({
         title: 'Workspace created!',
@@ -94,7 +124,14 @@ export function CreateWorkspaceModal({ trigger }: CreateWorkspaceModalProps) {
       router.refresh()
       
     } catch (error: any) {
-      console.error('Error creating workspace:', error)
+      console.error('❌ Error creating workspace:', error)
+      console.error('❌ Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      })
+      
       toast({
         title: 'Error',
         description: error.message || 'Failed to create workspace',

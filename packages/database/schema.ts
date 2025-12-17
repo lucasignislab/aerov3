@@ -130,7 +130,7 @@ export const issueStates = pgTable(
     name: varchar('name', { length: 255 }).notNull(),
     color: varchar('color', { length: 7 }).default('#3f3f46'),
     position: integer('position').notNull(),
-    group: issueStateGroupEnum('group').notNull(),
+    group: issueStateGroupEnum('state_group').notNull(),
     projectId: uuid('project_id').references(() => projects.id, {
       onDelete: 'cascade',
     }),
