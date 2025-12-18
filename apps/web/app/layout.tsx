@@ -1,6 +1,7 @@
 // apps/web/app/layout.tsx
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { Theme } from '@radix-ui/themes';
 import './globals.css';
 import { ToastProvider } from '../components/ui';
 
@@ -19,9 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} antialiased`} suppressHydrationWarning>
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+        <Theme appearance="dark" accentColor="indigo" grayColor="slate" panelBackground="translucent">
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+        </Theme>
       </body>
     </html>
   );
